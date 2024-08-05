@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Chat Application</h1>
+        <div class="user-list">
+            <h3>Online Users:</h3>
+            <ul id="users"></ul>
+        </div>
+        <div class="message-area">
+            <input id="recipientInput" type="text" placeholder="Recipient username" required>
+            <input id="messageInput" type="text" placeholder="Type your message..." required>
+            <button id="sendMessage">Send Message</button>
+        </div>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        const socket = io();
+        let username = prompt("Please enter your username:");
+
+        // Register the user
+        if (username) {
+            socket.emit('register', username);
+        } else {
+            alert("Username is required.");
+            window.location.reload();
+        }
+
+        // Update user list
+        socket.on('user_list', (users) => {
+            const usersList = document.getElementById('users');
+            usersList.innerHTML = ''; // Clear existing list
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.textContent = user;
+                usersList.appendChild(li);
+            });
+        });
+
+        // Send a private message
+        document.getElementById('sendMessage').onclick = () => {
+            const recipient = document.getElementById('recipientInput').value;
+            const msg = document.getElementById('messageInput').value;
+            socket.emit('private_message', { recipient, message: msg });
+            document.getElementById('messageInput').value = ''; // Clear input
+        };
+
+        // Listen for private messages
+        socket.on('private_message', ({ from, message }) => {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p><strong>${from}</strong>: ${message}</p>`;
+        });
+    </script>
+</body>
+
+</html>
